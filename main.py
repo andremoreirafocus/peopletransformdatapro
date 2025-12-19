@@ -213,7 +213,7 @@ def main():
         pq.write_table(table, out_buffer)
         out_buffer.seek(0)
         destination_object_name = (
-            f"{prefix}/consolidated-{year}{month}{day}{hour}.parquet"
+            f"{prefix}consolidated-{year}{month}{day}{hour}.parquet"
         )
         client = Minio(
             minio_endpoint, access_key=access_key, secret_key=secret_key, secure=False

@@ -7,6 +7,77 @@ import json
 import time
 
 
+def write_parquet_to_minio(
+    buffer,
+    destination_bucket_name,
+    destination_object_name,
+    minio_endpoint,
+    access_key,
+    secret_key,
+    secure=False,
+):
+    """
+    Writes a Parquet buffer to MinIO at the specified bucket and object name.
+    """
+    from minio import Minio
+
+    client = Minio(
+        minio_endpoint, access_key=access_key, secret_key=secret_key, secure=secure
+    )
+    if not client.bucket_exists(destination_bucket_name):
+        client.make_bucket(destination_bucket_name)
+    client.put_object(
+        bucket_name=destination_bucket_name,
+        object_name=destination_object_name,
+        data=buffer,
+        length=buffer.getbuffer().nbytes,
+        content_type="application/octet-stream",
+    )
+    print(
+        f"Aggregated Parquet file uploaded to MinIO bucket '{destination_bucket_name}' as '{destination_object_name}'"
+    )
+
+
+def read_and_flatten_jsons_from_minio(
+    object_names,
+    source_bucket_name,
+    minio_endpoint,
+    access_key,
+    secret_key,
+    secure=False,
+):
+    """
+    Reads and flattens all JSON files from MinIO, returning a list of flattened records.
+    """
+    all_flattened_records = []
+    for object_name in object_names:
+        print(f"Reading JSON from MinIO: {object_name}")
+        json_str = read_json_from_minio(
+            bucket_name=source_bucket_name,
+            object_name=object_name,
+            minio_endpoint=minio_endpoint,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=secure,
+        )
+        if json_str:
+            try:
+                data = json.loads(json_str)
+                if isinstance(data, dict):
+                    # If the dict has 'results', use the first result (legacy logic)
+                    if "results" in data and isinstance(data["results"], list):
+                        data = [data["results"][0]]
+                    else:
+                        data = [data]
+                for record in data:
+                    flat = flatten_json_string(json.dumps(record))
+                    if flat is not None:
+                        all_flattened_records.append(flat)
+            except Exception as e:
+                print(f"Error processing {object_name}: {e}")
+    return all_flattened_records
+
+
 def list_objects_in_minio_folder(
     bucket_name,
     prefix,
@@ -155,6 +226,20 @@ def json_string_to_parquet_minio(
         print(f"Error converting JSON to Parquet and uploading to MinIO: {e}")
 
 
+def flattened_records_to_parquet_buffer(flattened_records):
+    """
+    Converts a list of flattened records (dicts) to a Parquet file in a BytesIO buffer.
+    Returns the buffer.
+    """
+    df = pd.DataFrame(flattened_records)
+    print(df)
+    table = pa.Table.from_pandas(df)
+    out_buffer = BytesIO()
+    pq.write_table(table, out_buffer)
+    out_buffer.seek(0)
+    return out_buffer
+
+
 def main():
     minio_endpoint = "localhost:9000"
     access_key = "datalake"
@@ -178,57 +263,28 @@ def main():
     print(f"Files to be transformed: {objects_to_be_transformed}")
 
     # Aggregate all records from all JSON files
-    all_flattened_records = []
-    for object_name in objects_to_be_transformed:
-        print(f"Reading JSON from MinIO: {object_name}")
-        json_str = read_json_from_minio(
-            bucket_name=source_bucket_name,
-            object_name=object_name,
+    all_flattened_records = read_and_flatten_jsons_from_minio(
+        object_names=objects_to_be_transformed,
+        source_bucket_name=source_bucket_name,
+        minio_endpoint=minio_endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=False,
+    )
+
+    if all_flattened_records:
+        out_buffer = flattened_records_to_parquet_buffer(all_flattened_records)
+        destination_object_name = (
+            f"{prefix}consolidated-{year}{month}{day}{hour}.parquet"
+        )
+        write_parquet_to_minio(
+            buffer=out_buffer,
+            destination_bucket_name=destination_bucket_name,
+            destination_object_name=destination_object_name,
             minio_endpoint=minio_endpoint,
             access_key=access_key,
             secret_key=secret_key,
             secure=False,
-        )
-        if json_str:
-            try:
-                data = json.loads(json_str)
-                if isinstance(data, dict):
-                    # If the dict has 'results', use the first result (legacy logic)
-                    if "results" in data and isinstance(data["results"], list):
-                        data = [data["results"][0]]
-                    else:
-                        data = [data]
-                for record in data:
-                    flat = flatten_json_string(json.dumps(record))
-                    if flat is not None:
-                        all_flattened_records.append(flat)
-            except Exception as e:
-                print(f"Error processing {object_name}: {e}")
-
-    if all_flattened_records:
-        df = pd.DataFrame(all_flattened_records)
-        print(df)
-        table = pa.Table.from_pandas(df)
-        out_buffer = BytesIO()
-        pq.write_table(table, out_buffer)
-        out_buffer.seek(0)
-        destination_object_name = (
-            f"{prefix}consolidated-{year}{month}{day}{hour}.parquet"
-        )
-        client = Minio(
-            minio_endpoint, access_key=access_key, secret_key=secret_key, secure=False
-        )
-        if not client.bucket_exists(destination_bucket_name):
-            client.make_bucket(destination_bucket_name)
-        client.put_object(
-            bucket_name=destination_bucket_name,
-            object_name=destination_object_name,
-            data=out_buffer,
-            length=out_buffer.getbuffer().nbytes,
-            content_type="application/octet-stream",
-        )
-        print(
-            f"Aggregated Parquet file uploaded to MinIO bucket '{destination_bucket_name}' as '{destination_object_name}'"
         )
     else:
         print("No records found to write to Parquet.")

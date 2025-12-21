@@ -29,10 +29,6 @@ def main():
     all_flattened_records = read_and_flatten_jsons_from_minio(
         object_names=objects_to_be_transformed,
         source_bucket_name=source_bucket_name,
-        minio_endpoint=minio_endpoint,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=False,
     )
 
     if all_flattened_records:

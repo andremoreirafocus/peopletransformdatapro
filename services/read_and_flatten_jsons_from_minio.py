@@ -1,15 +1,8 @@
 import json
-from minio import Minio
+from services.get_minio_connection_data import get_minio_connection_data
 
 
-def read_and_flatten_jsons_from_minio(
-    object_names,
-    source_bucket_name,
-    minio_endpoint,
-    access_key,
-    secret_key,
-    secure=False,
-):
+def read_and_flatten_jsons_from_minio(object_names, source_bucket_name):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
     """
@@ -17,12 +10,7 @@ def read_and_flatten_jsons_from_minio(
     for object_name in object_names:
         print(f"Reading JSON from MinIO: {object_name}")
         json_str = read_json_from_minio(
-            bucket_name=source_bucket_name,
-            object_name=object_name,
-            minio_endpoint=minio_endpoint,
-            access_key=access_key,
-            secret_key=secret_key,
-            secure=secure,
+            bucket_name=source_bucket_name, object_name=object_name
         )
         if json_str:
             try:
@@ -42,14 +30,7 @@ def read_and_flatten_jsons_from_minio(
     return all_flattened_records
 
 
-def read_json_from_minio(
-    bucket_name,
-    object_name,
-    minio_endpoint,
-    access_key,
-    secret_key,
-    secure=True,
-):
+def read_json_from_minio(bucket_name, object_name):
     """
     Reads a JSON file from MinIO and returns its contents as a string.
     :param bucket_name: MinIO bucket name
@@ -61,9 +42,7 @@ def read_json_from_minio(
     :return: JSON file contents as a string
     """
     try:
-        client = Minio(
-            minio_endpoint, access_key=access_key, secret_key=secret_key, secure=secure
-        )
+        client = get_minio_connection_data()
         response = client.get_object(bucket_name, object_name)
         json_str = response.read().decode("utf-8")
         response.close()

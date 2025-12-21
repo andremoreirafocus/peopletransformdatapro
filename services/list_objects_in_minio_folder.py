@@ -1,13 +1,9 @@
-from minio import Minio
+from services.get_minio_connection_data import get_minio_connection_data
 
 
 def list_objects_in_minio_folder(
     bucket_name,
     prefix,
-    minio_endpoint,
-    access_key,
-    secret_key,
-    secure=True,
 ):
     """
     Lists files in a MinIO folder (prefix).
@@ -20,9 +16,7 @@ def list_objects_in_minio_folder(
     :return: List of file object names
     """
     try:
-        client = Minio(
-            minio_endpoint, access_key=access_key, secret_key=secret_key, secure=secure
-        )
+        client = get_minio_connection_data()
         objects = client.list_objects(bucket_name, prefix=prefix, recursive=True)
         return [obj.object_name for obj in objects]
     except Exception as e:

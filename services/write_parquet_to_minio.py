@@ -1,21 +1,11 @@
-from minio import Minio
+from services.get_minio_connection_data import get_minio_connection_data
 
 
-def write_parquet_to_minio(
-    buffer,
-    destination_bucket_name,
-    destination_object_name,
-    minio_endpoint,
-    access_key,
-    secret_key,
-    secure=False,
-):
+def write_parquet_to_minio(buffer, destination_bucket_name, destination_object_name):
     """
     Writes a Parquet buffer to MinIO at the specified bucket and object name.
     """
-    client = Minio(
-        minio_endpoint, access_key=access_key, secret_key=secret_key, secure=secure
-    )
+    client = get_minio_connection_data()
     if not client.bucket_exists(destination_bucket_name):
         client.make_bucket(destination_bucket_name)
     client.put_object(

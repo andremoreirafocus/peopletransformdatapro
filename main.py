@@ -22,10 +22,6 @@ def main():
     objects_to_be_transformed = list_objects_in_minio_folder(
         bucket_name=source_bucket_name,
         prefix=prefix,
-        minio_endpoint=minio_endpoint,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=False,
     )
     print(f"Files to be transformed: {objects_to_be_transformed}")
 
@@ -48,10 +44,6 @@ def main():
             buffer=out_buffer,
             destination_bucket_name=destination_bucket_name,
             destination_object_name=destination_object_name,
-            minio_endpoint=minio_endpoint,
-            access_key=access_key,
-            secret_key=secret_key,
-            secure=False,
         )
     else:
         print("No records found to write to Parquet.")

@@ -24,7 +24,7 @@ Todas as funções utilizam uma função que fornece os dados de conexão ao Min
 
 ## Requisitos
 - Python 3.8+
-- MinIO em execução
+- MinIO em execução e com credenciais criadas (access key e secret key)
 - Bibliotecas: pandas, pyarrow, minio
 
 

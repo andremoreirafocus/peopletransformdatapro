@@ -19,6 +19,9 @@ Este projeto realiza a transformação e consolidação de arquivos JSON armazen
 4. O DataFrame é convertido em um arquivo Parquet.
 5. O arquivo Parquet é enviado para o bucket de destino (ex: `processed/year=2025/month=12/day=19/hour=14/consolidated-2025121914.parquet`).
 
+## Conexão com o Minio
+Todas as funções utilizam uma função que fornece os dados de conexão ao Minio, incluindo o endpoint e as credenciais de forma que seja fácil alterar um só ponto a forma de obter a conexão, já visando a implementação usando o Airflow que pode armazenar essas informações fora do código.
+
 ## Requisitos
 - Python 3.8+
 - MinIO em execução

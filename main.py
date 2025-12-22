@@ -10,12 +10,13 @@ from services.get_parquet_buffer_from_flattened_records import (
 def main():
     source_bucket_name = "raw"
     destination_bucket_name = "processed"
+    app_folder = "people"
     year = 2025
     month = 12
     day = 19
     hour = 14
     start_time = time.time()
-    prefix = f"year={year}/month={month}/day={day}/hour={hour}/"
+    prefix = f"{app_folder}/year={year}/month={month}/day={day}/hour={hour}/"
     objects_to_be_transformed = list_objects_in_minio_folder(
         bucket_name=source_bucket_name,
         prefix=prefix,

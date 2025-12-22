@@ -39,3 +39,5 @@ PARTITIONED BY (
 STORED AS PARQUET
 LOCATION 's3a://processed/people'
 TBLPROPERTIES ('parquet.compress'='SNAPPY');
+
+MSCK REPAIR TABLE default.people;

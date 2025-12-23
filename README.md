@@ -26,6 +26,7 @@ Todas as funções utilizam uma função que fornece os dados de conexão ao Min
 - Python 3.8+
 - MinIO em execução e com credenciais criadas (access key e secret key)
 - Bibliotecas: pandas, pyarrow, minio
+- Opcional no VS Code: extensão parquet-viewer para ver conteúdo de arquivos gerados no projeto
 
 ## Proximos passos
  - implementar limpeza dos dados

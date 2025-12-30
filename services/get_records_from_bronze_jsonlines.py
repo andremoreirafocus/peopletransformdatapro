@@ -1,14 +1,14 @@
-from minio import Minio
 import json
+from storage.read_file_from_minio import read_file_from_minio
 
 
-def get_jsonlines_records_from_bronze(connection_data, object_name, source_bucket_name):
+def get_records_from_bronze_jsonlines(connection_data, object_name, source_bucket_name):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
     """
     all_flattened_records = []
     print(f"Reading JSON Lines file from MinIO: {object_name}")
-    json_lines_raw_content = get_file_from_minio(
+    json_lines_raw_content = read_file_from_minio(
         connection_data, bucket_name=source_bucket_name, object_name=object_name
     )
     if json_lines_raw_content:
@@ -30,34 +30,6 @@ def get_jsonlines_records_from_bronze(connection_data, object_name, source_bucke
         except Exception as e:
             print(f"Error processing {object_name}: {e}")
     return all_flattened_records
-
-
-def get_file_from_minio(connection_data, bucket_name, object_name):
-    """
-    Reads a JSON file from MinIO and returns its contents as a string.
-    :param bucket_name: MinIO bucket name
-    :param object_name: Object name for the JSON file in MinIO
-    :param minio_endpoint: MinIO server endpoint
-    :param access_key: MinIO access key
-    :param secret_key: MinIO secret key
-    :param secure: Use HTTPS if True, HTTP if False
-    :return: JSON file contents as a string
-    """
-    try:
-        client = Minio(
-            connection_data["minio_endpoint"],
-            access_key=connection_data["access_key"],
-            secret_key=connection_data["secret_key"],
-            secure=connection_data["secure"],
-        )
-        response = client.get_object(bucket_name, object_name)
-        json_str = response.read().decode("utf-8")
-        response.close()
-        response.release_conn()
-        return json_str
-    except Exception as e:
-        print(f"Error reading JSON from MinIO: {e}")
-        return None
 
 
 def flatten_json_string(json_str, sep="_"):

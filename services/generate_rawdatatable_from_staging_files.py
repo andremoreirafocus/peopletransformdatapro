@@ -1,6 +1,5 @@
 import json
-from minio import Minio
-from services.get_minio_connection_data import get_minio_connection_data
+from storage.read_file_from_minio import read_file_from_minio
 # from datetime import datetime
 
 
@@ -20,7 +19,7 @@ def generate_rawdatatable_from_staging_files(
         ts = partial_ts
         ts["minute"] = object_name[json_pos - 4 : json_pos - 2]
         ts["second"] = object_name[json_pos - 2 : json_pos]
-        json_str = get_file_from_minio(
+        json_str = read_file_from_minio(
             connection_data, bucket_name=source_bucket_name, object_name=object_name
         )
         print(f"Original JSON string: {json_str}")
@@ -45,34 +44,34 @@ def generate_rawdatatable_from_staging_files(
     return records_buffer.encode("utf-8")
 
 
-def get_file_from_minio(connection_data, bucket_name, object_name):
-    """
-    Reads a JSON file from MinIO and returns its contents as a string.
-    :param bucket_name: MinIO bucket name
-    :param object_name: Object name for the JSON file in MinIO
-    :param minio_endpoint: MinIO server endpoint
-    :param access_key: MinIO access key
-    :param secret_key: MinIO secret key
-    :param secure: Use HTTPS if True, HTTP if False
-    :return: JSON file contents as a string
-    """
-    try:
-        client = get_minio_connection_data()
-        client = Minio(
-            connection_data["minio_endpoint"],
-            access_key=connection_data["access_key"],
-            secret_key=connection_data["secret_key"],
-            secure=connection_data["secure"],
-        )
+# def get_file_from_minio(connection_data, bucket_name, object_name):
+#     """
+#     Reads a JSON file from MinIO and returns its contents as a string.
+#     :param bucket_name: MinIO bucket name
+#     :param object_name: Object name for the JSON file in MinIO
+#     :param minio_endpoint: MinIO server endpoint
+#     :param access_key: MinIO access key
+#     :param secret_key: MinIO secret key
+#     :param secure: Use HTTPS if True, HTTP if False
+#     :return: JSON file contents as a string
+#     """
+#     try:
+#         client = get_minio_connection_data()
+#         client = Minio(
+#             connection_data["minio_endpoint"],
+#             access_key=connection_data["access_key"],
+#             secret_key=connection_data["secret_key"],
+#             secure=connection_data["secure"],
+#         )
 
-        response = client.get_object(bucket_name, object_name)
-        json_str = response.read().decode("utf-8")
-        response.close()
-        response.release_conn()
-        return json_str
-    except Exception as e:
-        print(f"Error reading JSON from MinIO: {e}")
-        return None
+#         response = client.get_object(bucket_name, object_name)
+#         json_str = response.read().decode("utf-8")
+#         response.close()
+#         response.release_conn()
+#         return json_str
+#     except Exception as e:
+#         print(f"Error reading JSON from MinIO: {e}")
+#         return None
 
 
 def flatten_json_string(json_str, sep="_"):

@@ -1,7 +1,7 @@
 from minio import Minio
 
 
-def list_objects_in_minio_folder(
+def list_objects_in_minio_bucket(
     connection_data,
     bucket_name,
     prefix,
@@ -10,10 +10,7 @@ def list_objects_in_minio_folder(
     Lists files in a MinIO folder (prefix).
     :param bucket_name: MinIO bucket name
     :param prefix: Folder path (prefix) in the bucket
-    :param minio_endpoint: MinIO server endpoint
-    :param access_key: MinIO access key
-    :param secret_key: MinIO secret key
-    :param secure: Use HTTPS if True, HTTP if False
+    :param connection_data: MinIO connection data
     :return: List of file object names
     """
 
@@ -22,7 +19,7 @@ def list_objects_in_minio_folder(
             connection_data["minio_endpoint"],
             access_key=connection_data["access_key"],
             secret_key=connection_data["secret_key"],
-            secure=connection_data["secure"]
+            secure=connection_data["secure"],
         )
         objects = client.list_objects(bucket_name, prefix=prefix, recursive=True)
         return [obj.object_name for obj in objects]

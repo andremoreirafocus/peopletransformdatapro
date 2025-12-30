@@ -26,10 +26,17 @@ def main():
         prefix=prefix,
     )
     print(f"Files to be loaded in {bronze_bucket_name}: {objects_to_be_transformed}")
+    partial_ts = {
+        "year": year,
+        "month": month,
+        "day": day,
+        "hour": hour,
+    }
     records_buffer_with_metadata = get_table_from_minio_staging_files(
         connection_data,
         object_names=objects_to_be_transformed,
         source_bucket_name=source_bucket_name,
+        partial_ts=partial_ts,
     )
     print(f"Records with metadata: {records_buffer_with_metadata}")
     write_buffer_to_minio(

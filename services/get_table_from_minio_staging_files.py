@@ -5,7 +5,7 @@ from services.get_minio_connection_data import get_minio_connection_data
 
 
 def get_table_from_minio_staging_files(
-    connection_data, object_names, source_bucket_name
+    connection_data, object_names, source_bucket_name, partial_ts
 ):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
@@ -15,14 +15,21 @@ def get_table_from_minio_staging_files(
     records_buffer = ""
     for object_name in object_names:
         print(f"Reading JSON from MinIO: {object_name}")
+        json_pos = object_name.find(".json")
+
+        ts = partial_ts
+        ts["minute"] = object_name[json_pos - 4 : json_pos - 2]
+        ts["second"] = object_name[json_pos - 2 : json_pos]
         json_str = read_json_from_minio(
             connection_data, bucket_name=source_bucket_name, object_name=object_name
         )
         print(f"Original JSON string: {json_str}")
+        ingest_ts = f"{ts['year']}-{ts['month']}-{ts['day']}T{ts['hour']}:{ts['minute']}:{ts['second']}.000Z"
         if json_str:
             envelope = {
                 "_meta": {
-                    "ingest_ts": datetime.now().isoformat() + "Z",
+                    # "ingest_ts": datetime.now().isoformat() + "Z",
+                    "ingest_ts": ingest_ts,
                     # "dag_run_id": run_id,
                     # "task_id": task_id,
                     "source_system": source_system,

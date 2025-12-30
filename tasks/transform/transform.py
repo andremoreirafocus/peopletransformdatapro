@@ -9,15 +9,13 @@ from infra.storage.minio_functions import write_generic_bytes_to_minio
 
 
 def transform(year, month, day, hour):
-    # Ingestion from staging to bronze
+    # Transformation from bronze to silver
+    # Read the consolidated JSONL file from the bronze bucket
     bronze_bucket_name = "bronze"
     silver_bucket_name = "silver"
     app_folder = "people"
     prefix = f"{app_folder}/year={year}/month={month}/day={day}/hour={hour}/"
     destination_object_name = f"{app_folder}/year={year}/month={month}/day={day}/hour={hour}/consolidated-{year}{month}{day}{hour}.jsonl"
-    connection_data = get_minio_connection_data()
-    # Transformation from bronze to silver
-    # Read the consolidated JSONL file from the bronze bucket
     object_name = f"{app_folder}/year={year}/month={month}/day={day}/hour={hour}/consolidated-{year}{month}{day}{hour}.jsonl"
     connection_data = get_minio_connection_data()
     bronze_records = get_records_from_bronze_jsonlines(

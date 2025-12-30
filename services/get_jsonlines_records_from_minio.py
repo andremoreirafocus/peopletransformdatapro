@@ -8,20 +8,22 @@ def get_jsonlines_records_from_minio(connection_data, object_name, source_bucket
     """
     all_flattened_records = []
     print(f"Reading JSON Lines file from MinIO: {object_name}")
-    json_lines = get_file_from_minio(
+    json_lines_raw_content = get_file_from_minio(
         connection_data, bucket_name=source_bucket_name, object_name=object_name
     )
-    if json_lines:
+    if json_lines_raw_content:
+        json_lines = json_lines_raw_content.splitlines()
         try:
             for json_line in json_lines:
                 data = json.loads(json_line)
                 if isinstance(data, dict):
                     # If the dict has 'results', use the first result (legacy logic)
-                    if "results" in data and isinstance(data["results"], list):
-                        data = [data["results"][0]]
+                    payload = data["payload"]
+                    if "results" in payload and isinstance(payload["results"], list):
+                        payload = [payload["results"][0]]
                     else:
-                        data = [data]
-                for record in data:
+                        payload = [payload]
+                for record in payload:
                     flat = flatten_json_string(json.dumps(record))
                     if flat is not None:
                         all_flattened_records.append(flat)

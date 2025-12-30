@@ -1,4 +1,5 @@
 # import time
+from services.get_jsonlines_records_from_minio import get_jsonlines_records_from_minio
 from services.write_buffer_to_minio import write_buffer_to_minio
 from services.get_minio_connection_data import get_minio_connection_data
 from services.list_objects_in_minio_folder import list_objects_in_minio_folder
@@ -40,12 +41,20 @@ def main():
     )
     print(f"Records with metadata: {records_buffer_with_metadata}")
     # Write the consolidated JSONL file to the bronze bucket
+    print(f"Writing consolidated JSONL to MinIO in the {bronze_bucket_name} bucket...")
     write_buffer_to_minio(
         connection_data,
         buffer=records_buffer_with_metadata,
         destination_bucket_name=bronze_bucket_name,
         destination_object_name=destination_object_name,
     )
+
+    object_name = f"{app_folder}/year={year}/month={month}/day={day}/hour={hour}/consolidated-{year}{month}{day}{hour}.jsonl"
+    connection_data = get_minio_connection_data()
+    bronze_records = get_jsonlines_records_from_minio(
+        connection_data, object_name, bronze_bucket_name
+    )
+    print(bronze_records)
     return
 
     # print(

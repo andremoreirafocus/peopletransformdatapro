@@ -2,8 +2,10 @@ from tasks.load.services.generate_rawdatatable_from_staging_files import (
     generate_rawdatatable_from_staging_files,
 )
 from connections.get_minio_connection_data import get_minio_connection_data
-from infra.storage.list_objects_in_minio_bucket import list_objects_in_minio_bucket
-from infra.storage.write_generic_bytes_to_minio import write_generic_bytes_to_minio
+from infra.storage.minio_functions import (
+    list_objects_in_minio_bucket,
+    write_generic_bytes_to_minio,
+)
 
 
 def load(year, month, day, hour):

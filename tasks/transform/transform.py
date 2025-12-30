@@ -5,7 +5,7 @@ from tasks.transform.services.generate_parquet_buffer_from_records import (
     generate_parquet_buffer_from_records,
 )
 from connections.get_minio_connection_data import get_minio_connection_data
-from infra.storage.write_generic_bytes_to_minio import write_generic_bytes_to_minio
+from infra.storage.minio_functions import write_generic_bytes_to_minio
 
 
 def transform(year, month, day, hour):

@@ -1,5 +1,5 @@
 import json
-from infra.storage.read_file_from_minio import read_file_from_minio
+from infra.storage.minio_functions import read_file_from_minio
 
 
 def get_records_from_bronze_jsonlines(connection_data, object_name, source_bucket_name):

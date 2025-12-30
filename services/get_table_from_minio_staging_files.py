@@ -1,33 +1,41 @@
-from minio import Minio
 import json
+from minio import Minio
+from datetime import datetime
+from services.get_minio_connection_data import get_minio_connection_data
 
 
-def get_raw_files_from_minio(connection_data, object_names, source_bucket_name):
+def get_table_from_minio_staging_files(
+    connection_data, object_names, source_bucket_name
+):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
     """
-    all_flattened_records = []
+    source_system = "people_app"
+    raw_records_with_metadata = []
+    records_buffer = ""
     for object_name in object_names:
         print(f"Reading JSON from MinIO: {object_name}")
         json_str = read_json_from_minio(
             connection_data, bucket_name=source_bucket_name, object_name=object_name
         )
+        print(f"Original JSON string: {json_str}")
         if json_str:
-            try:
-                data = json.loads(json_str)
-                if isinstance(data, dict):
-                    # If the dict has 'results', use the first result (legacy logic)
-                    if "results" in data and isinstance(data["results"], list):
-                        data = [data["results"][0]]
-                    else:
-                        data = [data]
-                for record in data:
-                    flat = flatten_json_string(json.dumps(record))
-                    if flat is not None:
-                        all_flattened_records.append(flat)
-            except Exception as e:
-                print(f"Error processing {object_name}: {e}")
-    return all_flattened_records
+            envelope = {
+                "_meta": {
+                    "ingest_ts": datetime.now().isoformat() + "Z",
+                    # "dag_run_id": run_id,
+                    # "task_id": task_id,
+                    "source_system": source_system,
+                },
+                "payload": json.loads(json_str),  # Original JSON as escaped string
+            }
+            # print(f"ENVELOPE: {envelope}")
+            single_line_json = json.dumps(envelope)
+            # print(f"JSON Line: {single_line_json}")
+            raw_records_with_metadata.append(single_line_json)
+    records_buffer = "\n".join(raw_records_with_metadata)
+    # print(f"Records buffer: {records_buffer}")
+    return records_buffer.encode("utf-8")
 
 
 def read_json_from_minio(connection_data, bucket_name, object_name):
@@ -42,12 +50,14 @@ def read_json_from_minio(connection_data, bucket_name, object_name):
     :return: JSON file contents as a string
     """
     try:
+        client = get_minio_connection_data()
         client = Minio(
             connection_data["minio_endpoint"],
             access_key=connection_data["access_key"],
             secret_key=connection_data["secret_key"],
             secure=connection_data["secure"],
         )
+
         response = client.get_object(bucket_name, object_name)
         json_str = response.read().decode("utf-8")
         response.close()

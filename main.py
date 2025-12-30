@@ -6,7 +6,7 @@ from services.generate_parquet_buffer_from_records import (
 from services.generate_rawdatatable_from_staging_files import (
     generate_rawdatatable_from_staging_files,
 )
-from services.get_minio_connection_data import get_minio_connection_data
+from connections.get_minio_connection_data import get_minio_connection_data
 from storage.list_objects_in_minio_bucket import list_objects_in_minio_bucket
 from storage.write_generic_bytes_to_minio import write_generic_bytes_to_minio
 

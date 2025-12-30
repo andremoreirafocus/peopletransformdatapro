@@ -1,48 +1,33 @@
-import json
 from minio import Minio
-from datetime import datetime
-from services.get_minio_connection_data import get_minio_connection_data
+import json
 
 
-def get_table_from_minio_staging_files(
-    connection_data, object_names, source_bucket_name, partial_ts
-):
+def get_jsonlines_records_from_minio(connection_data, object_name, source_bucket_name):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
     """
-    source_system = "people_app"
-    raw_records_with_metadata = []
-    records_buffer = ""
-    for object_name in object_names:
-        print(f"Reading JSON from MinIO: {object_name}")
-        json_pos = object_name.find(".json")
-
-        ts = partial_ts
-        ts["minute"] = object_name[json_pos - 4 : json_pos - 2]
-        ts["second"] = object_name[json_pos - 2 : json_pos]
-        json_str = get_file_from_minio(
-            connection_data, bucket_name=source_bucket_name, object_name=object_name
-        )
-        print(f"Original JSON string: {json_str}")
-        ingest_ts = f"{ts['year']}-{ts['month']}-{ts['day']}T{ts['hour']}:{ts['minute']}:{ts['second']}.000Z"
-        if json_str:
-            envelope = {
-                "_meta": {
-                    # "ingest_ts": datetime.now().isoformat() + "Z",
-                    "ingest_ts": ingest_ts,
-                    # "dag_run_id": run_id,
-                    # "task_id": task_id,
-                    "source_system": source_system,
-                },
-                "payload": json.loads(json_str),  # Original JSON as escaped string
-            }
-            # print(f"ENVELOPE: {envelope}")
-            single_line_json = json.dumps(envelope)
-            # print(f"JSON Line: {single_line_json}")
-            raw_records_with_metadata.append(single_line_json)
-    records_buffer = "\n".join(raw_records_with_metadata)
-    # print(f"Records buffer: {records_buffer}")
-    return records_buffer.encode("utf-8")
+    all_flattened_records = []
+    print(f"Reading JSON Lines file from MinIO: {object_name}")
+    json_lines = get_file_from_minio(
+        connection_data, bucket_name=source_bucket_name, object_name=object_name
+    )
+    if json_lines:
+        try:
+            for json_line in json_lines:
+                data = json.loads(json_line)
+                if isinstance(data, dict):
+                    # If the dict has 'results', use the first result (legacy logic)
+                    if "results" in data and isinstance(data["results"], list):
+                        data = [data["results"][0]]
+                    else:
+                        data = [data]
+                for record in data:
+                    flat = flatten_json_string(json.dumps(record))
+                    if flat is not None:
+                        all_flattened_records.append(flat)
+        except Exception as e:
+            print(f"Error processing {object_name}: {e}")
+    return all_flattened_records
 
 
 def get_file_from_minio(connection_data, bucket_name, object_name):
@@ -57,14 +42,12 @@ def get_file_from_minio(connection_data, bucket_name, object_name):
     :return: JSON file contents as a string
     """
     try:
-        client = get_minio_connection_data()
         client = Minio(
             connection_data["minio_endpoint"],
             access_key=connection_data["access_key"],
             secret_key=connection_data["secret_key"],
             secure=connection_data["secure"],
         )
-
         response = client.get_object(bucket_name, object_name)
         json_str = response.read().decode("utf-8")
         response.close()

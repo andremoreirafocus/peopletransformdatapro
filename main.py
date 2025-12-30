@@ -39,6 +39,7 @@ def main():
         partial_ts=partial_ts,
     )
     print(f"Records with metadata: {records_buffer_with_metadata}")
+    # Write the consolidated JSONL file to the bronze bucket
     write_buffer_to_minio(
         connection_data,
         buffer=records_buffer_with_metadata,
@@ -51,7 +52,7 @@ def main():
     #     f"Files to be transformed from {bronze_bucket_name} to {silver_bucket_name}: {objects_to_be_transformed}"
     # )
     # # Aggregate all records from all JSON files
-    # all_flattened_records = get_raw_files_from_minio(
+    # all_flattened_records = get_json_files_from_minio(
     #     object_names=objects_to_be_transformed,
     #     source_bucket_name=source_bucket_name,
     # )

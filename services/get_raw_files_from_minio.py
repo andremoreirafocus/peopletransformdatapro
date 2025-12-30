@@ -2,14 +2,14 @@ from minio import Minio
 import json
 
 
-def get_raw_files_from_minio(connection_data, object_names, source_bucket_name):
+def get_json_files_from_minio(connection_data, object_names, source_bucket_name):
     """
     Reads and flattens all JSON files from MinIO, returning a list of flattened records.
     """
     all_flattened_records = []
     for object_name in object_names:
-        print(f"Reading JSON from MinIO: {object_name}")
-        json_str = read_json_from_minio(
+        print(f"Reading JSON file from MinIO: {object_name}")
+        json_str = get_file_from_minio(
             connection_data, bucket_name=source_bucket_name, object_name=object_name
         )
         if json_str:
@@ -30,7 +30,7 @@ def get_raw_files_from_minio(connection_data, object_names, source_bucket_name):
     return all_flattened_records
 
 
-def read_json_from_minio(connection_data, bucket_name, object_name):
+def get_file_from_minio(connection_data, bucket_name, object_name):
     """
     Reads a JSON file from MinIO and returns its contents as a string.
     :param bucket_name: MinIO bucket name

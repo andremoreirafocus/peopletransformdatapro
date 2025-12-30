@@ -1,13 +1,15 @@
 import time
 from services.get_jsonlines_records_from_bronze import get_jsonlines_records_from_bronze
 from services.get_parquet_buffer_from_records import get_parquet_buffer_from_records
-from services.write_buffer_to_minio import write_buffer_to_minio
+
 from services.get_minio_connection_data import get_minio_connection_data
 from services.list_objects_in_minio_folder import list_objects_in_minio_folder
 from services.generate_rawdatatable_from_staging_files import (
     generate_rawdatatable_from_staging_files,
 )
-from services.write_processed_to_minio import write_processed_to_minio
+from services.write_generic_bytes_to_minio import write_generic_bytes_to_minio
+# from services.write_bytes_to_minio import write_bytes_to_minio
+# from services.write_io_bytes_to_minio import write_io_bytes_to_minio
 
 
 def main():
@@ -45,7 +47,7 @@ def main():
     print(f"Records with metadata: {records_buffer_with_metadata}")
     # Write the consolidated JSONL file to the bronze bucket
     print(f"Writing consolidated JSONL to MinIO in the {bronze_bucket_name} bucket...")
-    write_buffer_to_minio(
+    write_generic_bytes_to_minio(
         connection_data,
         buffer=records_buffer_with_metadata,
         destination_bucket_name=bronze_bucket_name,
@@ -67,7 +69,7 @@ def main():
             f"{prefix}consolidated-{year}{month}{day}{hour}.parquet"
         )
         destination_bucket_name = silver_bucket_name
-        write_processed_to_minio(
+        write_generic_bytes_to_minio(
             connection_data,
             buffer=out_buffer,
             destination_bucket_name=destination_bucket_name,
